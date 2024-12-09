@@ -90,7 +90,7 @@ public class GameClient {
 
             try {
                 // Example of sending and receiving data
-                sendData(180); // Uncomment to send a new score
+                sendData(80); // Uncomment to send a new score
                 getData();    // Retrieve the current score
             } catch (IOException e) {
                 e.printStackTrace();
