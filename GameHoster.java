@@ -6,8 +6,6 @@ import java.net.SocketException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class GameHoster {
 
@@ -35,16 +33,17 @@ public class GameHoster {
         return null;
     }
 
-    // Method to send data (POST request)
-    public static void sendData(int score) throws IOException {
-        URL url = new URL(SERVER_URL);
+    // Method to send a specific variable (POST request)
+    public static void sendData(String key, int value) throws IOException {
+        URL url = new URL(SERVER_URL + "data");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setDoOutput(true);
 
         // JSON data to send
-        String jsonInputString = "{\"score\": " + score + "}";
+        String jsonInputString = String.format("{\"key\":\"%s\",\"value\":%d}", key, value);
+
 
         // Send the data
         try (OutputStream os = connection.getOutputStream()) {
@@ -56,21 +55,19 @@ public class GameHoster {
         int responseCode = connection.getResponseCode();
         System.out.println("Response Code: " + responseCode);
 
-        if (responseCode == HttpURLConnection.HTTP_OK) { // Success
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                String responseLine;
-                while ((responseLine = br.readLine()) != null) {
-                    System.out.println(responseLine);
-                }
-            }
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            System.out.println("Value updated successfully.");
         } else {
             System.out.println("Error: " + connection.getResponseMessage());
         }
     }
 
-    // Method to get data (GET request)
-    public static void getData() throws IOException {
-        URL url = new URL(SERVER_URL);
+    // Method to get a specific variable by key (GET request)
+    // Method to get a specific variable by key (GET request)
+    // Method to get a specific variable by key (GET request)
+    public static void getData(String key) throws IOException {
+        // Fix the URL to match the server route (/data/:key)
+        URL url = new URL(SERVER_URL + "data/" + key);  // Use "data/" before the key
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
 
@@ -83,36 +80,35 @@ public class GameHoster {
         }
     }
 
-    public static String getLastOctet(String ipAddress) {
-        // Regex pattern to match the last octet of an IP address
-        String regex = "\\d{1,3}$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(ipAddress);
 
-        if (matcher.find()) {
-            return matcher.group(); // Return the matched part
-        }
 
-        // Return null or an empty string if no match is found
-        return "";
-    }
-
-    public static void connect(){
-        // Dynamically retrieve the local IP address and construct the server URL
+    // Method to connect to the server and demonstrate sending/retrieving data
+    public static void connect() {
         String localIP = getLocalIPAddress();
         if (localIP != null) {
-            SERVER_URL = "http://" + localIP + ":3000/data"; // Using the local IP address for server communication
+            SERVER_URL = "http://" + localIP + ":3000/";
             System.out.println("Connecting to server at: " + SERVER_URL);
+
             Thread thread = new Thread(() -> {
-                /*sendData(280);
-                getData();*/
+                try {
+                    sendData("score", 123); // Update score
+                    sendData("level", 5); // Update level
+                    sendData("time", 120); // Update time
+
+                    getData("score"); // Retrieve score
+                    getData("level"); // Retrieve level
+                    getData("time"); // Retrieve time
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             });
             thread.start();
-
         } else {
             System.out.println("Local IP not found.");
         }
     }
 
-
+    public static void main(String[] args) {
+        connect();
+    }
 }
